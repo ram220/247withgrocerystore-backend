@@ -64,35 +64,27 @@ router.put("/update-status/:orderId", authMiddleware, async (req, res) => {
 });
 
 
-router.get("/monthly-income", authMiddleware, async (req, res) => {
+router.get("/monthly-income", async (req, res) => {
   try {
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Only admin can access this" });
-    }
-
-    // Aggregate total income by month
-    const monthlyIncome = await Order.aggregate([
+    const income = await Order.aggregate([
       {
         $group: {
-          _id: { month: { $month: "$orderDate" }, year: { $year: "$orderDate" } },
+          _id: {
+            year: { $year: "$orderDate" },
+            month: { $month: "$orderDate" }
+          },
           totalIncome: { $sum: "$totalAmount" }
         }
       },
       { $sort: { "_id.year": 1, "_id.month": 1 } }
     ]);
 
-    // Total income overall
-    const totalIncome = await Order.aggregate([
-      { $group: { _id: null, totalIncome: { $sum: "$totalAmount" } } }
-    ]);
+    // ✅ Calculate total income across all orders
+    const totalIncome = income.reduce((sum, item) => sum + item.totalIncome, 0);
 
-    res.json({
-      monthlyIncome,
-      totalIncome: totalIncome[0]?.totalIncome || 0
-    });
+    res.json({ monthlyIncome: income, totalIncome });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ error: err.message });
   }
 });
 
