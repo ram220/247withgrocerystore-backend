@@ -93,7 +93,6 @@ router.get("/search", async (req, res) => {
 
 
 // ✅ Update product (admin only)
-// ✅ Update product (admin only)
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== "admin") {
@@ -118,11 +117,6 @@ router.put("/:id", authMiddleware, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
-
-
-
 
 module.exports = router;
 
