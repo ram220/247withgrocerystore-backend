@@ -63,4 +63,37 @@ router.put("/update-status/:orderId", authMiddleware, async (req, res) => {
   }
 });
 
+
+router.get("/monthly-income", authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Only admin can access this" });
+    }
+
+    // Aggregate total income by month
+    const monthlyIncome = await Order.aggregate([
+      {
+        $group: {
+          _id: { month: { $month: "$orderDate" }, year: { $year: "$orderDate" } },
+          totalIncome: { $sum: "$totalAmount" }
+        }
+      },
+      { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ]);
+
+    // Total income overall
+    const totalIncome = await Order.aggregate([
+      { $group: { _id: null, totalIncome: { $sum: "$totalAmount" } } }
+    ]);
+
+    res.json({
+      monthlyIncome,
+      totalIncome: totalIncome[0]?.totalIncome || 0
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 module.exports = router;
