@@ -14,7 +14,10 @@ connectDb(); // Make sure your db connection uses process.env.MONGO_URI
 
 const app = express();
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:3000", "https://two47withgrocerystoreram-frontend.onrender.com"], 
+  credentials: true,
+}));
 
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRouter);
