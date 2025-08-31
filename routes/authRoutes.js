@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const userModel = require('../models/UsersModel');
 
 const router = express.Router();
-const JWT_SECRET = "mysecretkey";
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // -------------------- ROUTES --------------------
 
