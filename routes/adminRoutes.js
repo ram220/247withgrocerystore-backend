@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Order = require("../models/OrdersModel");
+const Product=require('../models/ProductsModel')
 const { authMiddleware } = require("./authRoutes");
 
 // GET all orders with pagination (admin only)
@@ -85,6 +86,32 @@ router.get("/monthly-income", async (req, res) => {
     res.json({ monthlyIncome: income, totalIncome });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+
+// PUT update product price (admin only)
+router.put("/products/:id/price", authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Only admin can update product" });
+    }
+
+    const { id } = req.params;
+    const { price } = req.body;
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      { price },
+      { new: true }
+    );
+
+    if (!updatedProduct) return res.status(404).json({ message: "Product not found" });
+
+    res.json(updatedProduct);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
