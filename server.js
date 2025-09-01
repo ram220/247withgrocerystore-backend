@@ -15,8 +15,12 @@ connectDb(); // Make sure your db connection uses process.env.MONGO_URI
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: ["http://localhost:3000", "https://two47withgrocerystoreram-frontend.onrender.com"], 
-  credentials: true,
+  origin: [
+    "http://localhost:3000",
+    "https://two47withgrocerystoreram-frontend.onrender.com",
+    "https://247withgrocerystore-frontend.vercel.app"  // <-- add this
+  ],
+  credentials: true
 }));
 
 app.use('/api/products', productRoutes);
