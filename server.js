@@ -1,5 +1,6 @@
-const express = require("express");
 const dotenv = require('dotenv');
+dotenv.config();
+const express = require("express");
 const connectDb = require('./config/db');
 const productRoutes = require('./routes/productRoutes');
 const { router: authRouter, authMiddleware } = require('./routes/authRoutes');
@@ -8,8 +9,10 @@ const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const cors = require("cors");
+// DEBUG: confirm env vars are loaded
+console.log("RAZORPAY_KEY_ID =", process.env.RAZORPAY_KEY_ID ? "✅" : "❌");
+console.log("RAZORPAY_KEY_SECRET =", process.env.RAZORPAY_KEY_SECRET ? "✅" : "❌");
 
-dotenv.config();
 connectDb(); // Make sure your db connection uses process.env.MONGO_URI
 
 const app = express();

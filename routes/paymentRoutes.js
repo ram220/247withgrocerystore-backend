@@ -3,8 +3,15 @@ const router = express.Router();
 const Order = require("../models/OrdersModel");
 const Cart = require("../models/CartModel");
 const PaymentTemp = require("../models/PaymentTempModel");
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
 
-// Mock UPI payment initiation
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// 1. Create Razorpay order
 router.post("/init", async (req, res) => {
   try {
     const { amount, userId, items } = req.body;
@@ -18,45 +25,71 @@ router.post("/init", async (req, res) => {
     });
     await tempPayment.save();
 
-    // Instead of opening real payment page, return a simulated payment page URL
-    res.json({ redirectUrl: `/api/payment/simulate/${tempPayment._id}` });
+    const options = {
+      amount: amount * 100, // amount in paise
+      currency: "INR",
+      receipt: `rcpt_${tempPayment._id}`,
+    };
+
+    const order = await razorpay.orders.create(options);
+
+    res.json({
+      orderId: order.id,
+      key: process.env.RAZORPAY_KEY_ID,
+      amount: order.amount,
+      currency: order.currency,
+      tempPaymentId: tempPayment._id,
+    });
   } catch (err) {
     console.error("Payment Init Error:", err.message);
     res.status(500).json({ message: "Something went wrong" });
   }
 });
 
-// Simulated payment page
-router.get("/simulate/:tempId", async (req, res) => {
+// 2. Verify Payment
+router.post("/verify", async (req, res) => {
   try {
-    const tempPayment = await PaymentTemp.findById(req.params.tempId);
-    if (!tempPayment) return res.send("Invalid payment");
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, tempPaymentId } = req.body;
 
-    // Automatically mark payment as success and call callback
-    const formattedItems = tempPayment.items.map(item => ({
-      productId: item.productId,
-      quantity: item.quantity,
-      price: item.price
-    }));
+    const sign = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(sign.toString())
+      .digest("hex");
 
-    const newOrder = new Order({
-      userId: tempPayment.userId,
-      items: formattedItems,
-      totalAmount: tempPayment.totalAmount,
-      status: "Confirmed"
-    });
-    await newOrder.save();
+    if (razorpay_signature === expectedSign) {
+      // Get temp payment
+      const tempPayment = await PaymentTemp.findById(tempPaymentId);
+      if (!tempPayment) return res.status(400).json({ message: "Invalid payment reference" });
 
-    // Clear user cart
-    await Cart.findOneAndUpdate({ userId: tempPayment.userId }, { $set: { items: [] } });
+      // Create confirmed order
+      const formattedItems = tempPayment.items.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+      }));
 
-    // Delete temp payment
-    await PaymentTemp.findByIdAndDelete(tempPayment._id);
+      const newOrder = new Order({
+        userId: tempPayment.userId,
+        items: formattedItems,
+        totalAmount: tempPayment.totalAmount,
+        status: "Confirmed",
+      });
+      await newOrder.save();
 
-    res.send("Payment successful! Order placed.");
+      // Clear user cart
+      await Cart.findOneAndUpdate({ userId: tempPayment.userId }, { $set: { items: [] } });
+
+      // Delete temp payment
+      await PaymentTemp.findByIdAndDelete(tempPayment._id);
+
+      return res.json({ success: true, message: "Payment successful! Order placed." });
+    } else {
+      return res.status(400).json({ success: false, message: "Payment verification failed" });
+    }
   } catch (err) {
-    console.error(err);
-    res.status(500).send("Something went wrong");
+    console.error("Payment Verify Error:", err.message);
+    res.status(500).json({ message: "Something went wrong" });
   }
 });
 
