@@ -12,6 +12,7 @@ router.get("/:userId", async (req, res) => {
       return res.status(400).json({ success: false, message: "Invalid userId" });
     }
     const orders = await Order.find({ userId: new mongoose.Types.ObjectId(userId) })
+    .sort({createdAt: -1})
       .populate("items.productId", "name price image");
     res.json({ success: true, orders });
   } catch (error) {
