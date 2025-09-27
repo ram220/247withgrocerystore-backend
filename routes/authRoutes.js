@@ -34,7 +34,7 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "1d" });
+    const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "1h" });
     res.status(200).json({
       message: "Login Successfully",
       token,
@@ -62,6 +62,42 @@ router.get('/user/:id', async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+
+// to change address of the user 
+// Update user address & mobile
+router.put('/user/:id', async (req, res) => {
+  try {
+    const { address, mobile } = req.body;
+
+    // Find user by ID
+    const user = await userModel.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    // Update fields
+    if (address) user.address = address;
+    if (mobile) user.mobile = mobile;
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: "User details updated successfully",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        address: user.address,
+        mobile: user.mobile
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 // -------------------- MIDDLEWARE --------------------
 function authMiddleware(req, res, next) {
