@@ -21,7 +21,7 @@ app.use(cors({
   origin: [
     "http://localhost:3000",
     "https://two47withgrocerystoreram-frontend.onrender.com",
-    "https://247withgrocerystore-frontend.vercel.app"  // <-- add this
+    "https://247withmygrocerystore.vercel.app"  // <-- add this
   ],
   credentials: true
 }));
