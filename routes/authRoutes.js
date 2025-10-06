@@ -34,7 +34,8 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "1h" });
+    const token = jwt.sign({ id: user._id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: "1hr" });
+
     res.status(200).json({
       message: "Login Successfully",
       token,
@@ -109,7 +110,7 @@ function authMiddleware(req, res, next) {
     req.user = decoded; // attach user data to request
     next();
   } catch (err) {
-    return res.status(403).json({ message: "Invalid or Expired Token" });
+    return res.status(403).json({ message: "Invalid or Expired Token, Please Login Again" });
   }
 }
 
