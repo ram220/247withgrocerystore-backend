@@ -64,7 +64,6 @@ router.get('/user/:id', async (req, res) => {
   }
 });
 
-// to change address of the user 
 // Update user address & mobile
 router.put('/user/:id', async (req, res) => {
   try {

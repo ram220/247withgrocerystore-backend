@@ -47,13 +47,13 @@ router.post("/",authMiddleware, upload.single("image"), async (req, res) => {
       return res.status(403).json({ message: "Only admin can add products" });
     }
 
-    const { name, category, price, keywords } = req.body;
+    const { name, category, price, keywords,description } = req.body;
 
     // check uploaded files
     console.log("Uploaded files:", req.file);
 
 
-    if (!name || !category || !price) {
+    if (!name || !category || !price ||!description) {
       return res.status(400).json({ message: "Required fields missing" });
     }
     const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
@@ -62,6 +62,7 @@ router.post("/",authMiddleware, upload.single("image"), async (req, res) => {
       category,
       price,
       image: imagePath,
+      description,
       inStock: req.body.inStock !== undefined ? req.body.inStock : true,
       keywords: keywords
         ? keywords.split(",").map((k) => k.trim().toLowerCase())
@@ -117,6 +118,44 @@ router.put("/:id", authMiddleware, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// 3️⃣ Recommended products (MUST BE BEFORE :id)
+router.get("/recommend/:id", async (req, res) => {
+  try {
+    const currentProduct = await productSchema.findById(req.params.id);
+    if (!currentProduct) return res.status(404).json({ message: "Product not found" });
+
+    const recommendedProducts = await productSchema.aggregate([
+      { $match: { 
+          category: currentProduct.category, 
+          _id: { $ne: currentProduct._id }, 
+          inStock: true 
+      }},
+      { $sample: { size: 4 } } // pick 3 random products
+    ]);
+
+    res.json(recommendedProducts);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+// 4️⃣ Get single product (ALWAYS LAST)
+router.get("/:id", async (req, res) => {
+  try {
+    console.log("Requested ID:", req.params.id);
+    const product = await productSchema.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    res.json(product);
+  } catch (err) {
+    res.status(400).json({ message: "Invalid product ID" });
+  }
+});
+
 
 module.exports = router;
 

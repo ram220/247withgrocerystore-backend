@@ -8,6 +8,8 @@ const cartRoutes = require("./routes/cartRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+
+
 const cors = require("cors");
 // DEBUG: confirm env vars are loaded
 console.log("RAZORPAY_KEY_ID =", process.env.RAZORPAY_KEY_ID ? "✅" : "❌");
@@ -33,6 +35,35 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/orders", orderRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/admin", adminRoutes);
+
+
+
+// chat bot
+/*
+const OpenAI = require("openai");
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
+app.post("/api/chatbot", async (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message) return res.status(400).json({ error: "Message is required" });
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [{ role: "user", content: message }],
+    });
+
+    res.json({ reply: response.choices[0].message.content });
+  } catch (err) {
+    console.error("Chatbot error:", err);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+});
+
+*/
 
 app.get("/", (req, res) => {
     res.send("Hello from the server");
