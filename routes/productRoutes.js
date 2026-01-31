@@ -42,12 +42,13 @@ router.get("/", async (req, res) => {
 
 // ✅ Add new product (admin only)
 router.post("/",authMiddleware, upload.single("image"), async (req, res) => {
+  console.log(req.body);
   try {
     if (req.user.role !== "admin") {
       return res.status(403).json({ message: "Only admin can add products" });
     }
 
-    const { name, category, price, keywords,description } = req.body;
+    const { name, category, price, keywords,description,expiryDate } = req.body;
 
     // check uploaded files
     console.log("Uploaded files:", req.file);
@@ -62,6 +63,7 @@ router.post("/",authMiddleware, upload.single("image"), async (req, res) => {
       category,
       price,
       image: imagePath,
+      expiryDate : expiryDate ? new Date(expiryDate) : null,
       description,
       inStock: req.body.inStock !== undefined ? req.body.inStock : true,
       keywords: keywords
@@ -119,6 +121,37 @@ router.put("/:id", authMiddleware, async (req, res) => {
   }
 });
 
+
+// ✅ OFFERS — MUST BE BEFORE :id
+// OFFERS: products expiring in next 7 days
+// GET /api/products/offers
+router.get("/offers", async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // start of today
+
+    const tenDaysLater = new Date();
+    tenDaysLater.setDate(today.getDate() + 10);
+    tenDaysLater.setHours(23, 59, 59, 999); // end of 10th day
+
+    const offers = await productSchema.find({
+      expiryDate: { $exists: true, $gte: today, $lte: tenDaysLater },
+      inStock: true
+    }).sort({ expiryDate: 1 });
+
+    res.json(offers);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+
+
+
+
+
 // 3️⃣ Recommended products (MUST BE BEFORE :id)
 router.get("/recommend/:id", async (req, res) => {
   try {
@@ -155,6 +188,8 @@ router.get("/:id", async (req, res) => {
     res.status(400).json({ message: "Invalid product ID" });
   }
 });
+
+
 
 
 module.exports = router;

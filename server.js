@@ -10,10 +10,16 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 
 
+const markExpiringProducts = require("./utils/checkOffers");
+
+
+
+
 const cors = require("cors");
 // DEBUG: confirm env vars are loaded
 console.log("RAZORPAY_KEY_ID =", process.env.RAZORPAY_KEY_ID ? "✅" : "❌");
 console.log("RAZORPAY_KEY_SECRET =", process.env.RAZORPAY_KEY_SECRET ? "✅" : "❌");
+
 
 connectDb(); // Make sure your db connection uses process.env.MONGO_URI
 
@@ -35,7 +41,6 @@ app.use("/uploads", express.static("uploads"));
 app.use("/api/orders", orderRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/admin", adminRoutes);
-
 
 
 // chat bot
@@ -64,6 +69,19 @@ app.post("/api/chatbot", async (req, res) => {
 });
 
 */
+
+// Call immediately on server start
+markExpiringProducts()
+  .then(() => console.log("Expiring products marked for offers"))
+  .catch(err => console.error("Error marking offers:", err));
+
+// Optional: run every 24 hours
+const cron = require("node-cron");
+cron.schedule("0 0 * * *", () => {
+  markExpiringProducts()
+    .then(() => console.log("Daily offer check complete"))
+    .catch(err => console.error(err));
+});
 
 app.get("/", (req, res) => {
     res.send("Hello from the server");
