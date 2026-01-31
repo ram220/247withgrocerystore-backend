@@ -11,10 +11,30 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+
+
+
 // 1. Create Razorpay order
 router.post("/init", async (req, res) => {
   try {
     const { amount, userId, items } = req.body;
+
+    console.log("AMOUNT RECEIVED:", amount, typeof amount);
+
+    console.log(
+      "RAZORPAY KEY ID:",
+      process.env.RAZORPAY_KEY_ID ? "OK" : "MISSING"
+    );
+
+    console.log(
+      "RAZORPAY KEY SECRET:",
+      process.env.RAZORPAY_KEY_SECRET ? "OK" : "MISSING"
+    );
+
+    if (!amount || isNaN(amount) || amount <= 0) {
+  return res.status(400).json({ message: "Invalid amount" });
+}
+
 
     // Save temporary payment
     const tempPayment = new PaymentTemp({
@@ -26,7 +46,7 @@ router.post("/init", async (req, res) => {
     await tempPayment.save();
 
     const options = {
-      amount: amount * 100, // amount in paise
+amount: Math.round(Number(amount) * 100),
       currency: "INR",
       receipt: `rcpt_${tempPayment._id}`,
     };
