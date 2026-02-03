@@ -32,6 +32,9 @@ const storage=new CloudinaryStorage({
   params:{
     folder:"products",
     allowed_formats:["jpg", "png", "jpeg"],
+    transformation: [
+      { width: 600, height: 600, crop: "limit", quality: "auto" }
+    ]
   },
 })
 
@@ -81,7 +84,7 @@ router.post("/",authMiddleware, (req, res,next) => {
 
 
 const imagePath = req.file
-  ? req.file.path: null;
+  ? req.file.path: "";
       const newProduct = new productSchema({
       name,
       category,
