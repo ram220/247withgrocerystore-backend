@@ -37,7 +37,7 @@ app.use(cors({
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRouter);
 app.use("/api/cart", cartRoutes);
-app.use("/uploads", express.static("uploads"));
+//app.use("/uploads", express.static("uploads"));
 app.use("/api/orders", orderRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/admin", adminRoutes);

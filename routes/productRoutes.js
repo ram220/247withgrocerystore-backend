@@ -4,8 +4,10 @@ const { authMiddleware } = require("./authRoutes");
 const router = express.Router();
 const multer = require("multer");
 const path = require("path");
+const {CloudinaryStorage}=require("multer-storage-cloudinary")
+const cloudinary=require("../config/cloudinary");
 
-// configure multer storage
+/* configure multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
 
@@ -20,6 +22,20 @@ const upload = multer({
   storage,
   limits: { fileSize: 500 * 1024 * 1024 }
 });
+
+*/
+
+// cloudinary storage for image instead of mutler
+
+const storage=new CloudinaryStorage({
+  cloudinary,
+  params:{
+    folder:"products",
+    allowed_formats:["jpg", "png", "jpeg"],
+  },
+})
+
+const upload=multer({storage});
 
 // ✅ Fetch all products
 router.get("/", async (req, res) => {
@@ -65,8 +81,7 @@ router.post("/",authMiddleware, (req, res,next) => {
 
 
 const imagePath = req.file
-  ? `/uploads/${req.file.filename}`
-  : null;
+  ? req.file.path: null;
       const newProduct = new productSchema({
       name,
       category,
@@ -81,6 +96,9 @@ const imagePath = req.file
     });
 
     await newProduct.save()
+
+    console.log("product after added in mongodb");
+    console.log(newProduct);
 
     res.status(201).json({ message: "Product Added Successfully" });
   } catch (err) {
