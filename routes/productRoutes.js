@@ -16,7 +16,10 @@ const storage = multer.diskStorage({
 }
 });
 
-const upload = multer({ storage });
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 500 * 1024 * 1024 }
+});
 
 // ✅ Fetch all products
 router.get("/", async (req, res) => {
@@ -41,37 +44,44 @@ router.get("/", async (req, res) => {
 
 
 // ✅ Add new product (admin only)
-router.post("/",authMiddleware, upload.single("image"), async (req, res) => {
-  console.log(req.body);
+router.post("/",authMiddleware, (req, res,next) => {
+  upload.single("image")(req, res, function (err) {
+    if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  }); }, async (req,res)=>{
   try {
-    if (req.user.role !== "admin") {
+    if (!req.user || req.user.role !== "admin") {
       return res.status(403).json({ message: "Only admin can add products" });
     }
 
     const { name, category, price, keywords,description,expiryDate } = req.body;
 
-    // check uploaded files
-    console.log("Uploaded files:", req.file);
 
-
-    if (!name || !category || !price ||!description) {
+    if (!name || !category || !price) {
       return res.status(400).json({ message: "Required fields missing" });
     }
-    const imagePath = req.file ? `/uploads/${req.file.filename}` : null;
-    const newProduct = new productSchema({
+
+
+const imagePath = req.file
+  ? `/uploads/${req.file.filename}`
+  : null;
+      const newProduct = new productSchema({
       name,
       category,
       price,
       image: imagePath,
       expiryDate : expiryDate ? new Date(expiryDate) : null,
-      description,
+      description:description || "NO description yet",
       inStock: req.body.inStock !== undefined ? req.body.inStock : true,
       keywords: keywords
         ? keywords.split(",").map((k) => k.trim().toLowerCase())
         : [],
     });
 
-    await newProduct.save();
+    await newProduct.save()
+
     res.status(201).json({ message: "Product Added Successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -178,7 +188,6 @@ router.get("/recommend/:id", async (req, res) => {
 // 4️⃣ Get single product (ALWAYS LAST)
 router.get("/:id", async (req, res) => {
   try {
-    console.log("Requested ID:", req.params.id);
     const product = await productSchema.findById(req.params.id);
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
