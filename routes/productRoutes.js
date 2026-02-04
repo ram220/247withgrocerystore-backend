@@ -100,8 +100,7 @@ const imagePath = req.file
 
     await newProduct.save()
 
-    console.log("product after added in mongodb");
-    console.log(newProduct);
+
 
     res.status(201).json({ message: "Product Added Successfully" });
   } catch (err) {
@@ -172,16 +171,9 @@ router.get("/offers", async (req, res) => {
 
     res.json(offers);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
-
-
-
-
-
-
 
 // 3️⃣ Recommended products (MUST BE BEFORE :id)
 router.get("/recommend/:id", async (req, res) => {
@@ -200,7 +192,6 @@ router.get("/recommend/:id", async (req, res) => {
 
     res.json(recommendedProducts);
   } catch (error) {
-    console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 });

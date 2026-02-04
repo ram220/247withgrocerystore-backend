@@ -34,7 +34,6 @@ router.get("/all-orders", authMiddleware, async (req, res) => {
       currentPage: page
     });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -59,7 +58,6 @@ router.put("/update-status/:orderId", authMiddleware, async (req, res) => {
 
     res.json(updatedOrder);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -110,7 +108,6 @@ router.put("/products/:id/price", authMiddleware, async (req, res) => {
 
     res.json(updatedProduct);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });

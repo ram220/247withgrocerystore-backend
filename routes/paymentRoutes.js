@@ -19,21 +19,9 @@ router.post("/init", async (req, res) => {
   try {
     const { amount, userId, items } = req.body;
 
-    console.log("AMOUNT RECEIVED:", amount, typeof amount);
-
-    console.log(
-      "RAZORPAY KEY ID:",
-      process.env.RAZORPAY_KEY_ID ? "OK" : "MISSING"
-    );
-
-    console.log(
-      "RAZORPAY KEY SECRET:",
-      process.env.RAZORPAY_KEY_SECRET ? "OK" : "MISSING"
-    );
-
     if (!amount || isNaN(amount) || amount <= 0) {
-  return res.status(400).json({ message: "Invalid amount" });
-}
+      return res.status(400).json({ message: "Invalid amount" });
+    }
 
 
     // Save temporary payment

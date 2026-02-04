@@ -16,7 +16,6 @@ router.get("/:userId", async (req, res) => {
       .populate("items.productId", "name price image");
     res.json({ success: true, orders });
   } catch (error) {
-    console.error("Get orders error:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -34,7 +33,6 @@ router.post("/", async (req, res) => {
 
     res.json({ success: true, order: newOrder });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ success: false, message: "Failed to place order" });
   }
 });
