@@ -8,16 +8,35 @@ const markExpiringProducts = async () => {
   threshold.setDate(today.getDate() + 7);
   threshold.setHours(23, 59, 59, 999);
 
+  // reset old offers
+await productSchema.updateMany(
+  {
+    expiryDate: { $lt: today }
+  },
+  {
+    $set: {
+      isOffer: false,
+      offerType: null,
+      discountPercentage: 0
+    }
+  }
+);
+
+
   await productSchema.updateMany(
-    {
-      expiryDate: { $gte: today, $lte: threshold },
-    },
-    {
+  {
+    expiryDate: { $gte: today, $lte: threshold },
+    inStock: true
+  },
+  {
+    $set: {
       isOffer: true,
       offerType: "DISCOUNT",
       discountPercentage: 20,
-    }
-  );
+    },
+  }
+);
+
 };
 
 module.exports = markExpiringProducts;
