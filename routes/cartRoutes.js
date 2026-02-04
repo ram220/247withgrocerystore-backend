@@ -9,7 +9,7 @@ router.get("/:userId", async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId: req.params.userId })
       .populate("items.productId", "name price image isOffer discountPercentage expiryDate"); // ✅ populate product
-    if (!cart) return res.json({ items: [] });
+    if (!cart) return res.json({ items: populatedCart.items });
     res.json(cart);
   } catch (err) {
     res.status(500).json({ message: "Error fetching cart" });
@@ -53,7 +53,7 @@ router.post("/add", async (req, res) => {
     const populatedCart = await Cart.findOne({ userId })
       .populate("items.productId", "name price image isOffer discountPercentage expiryDate");
 
-    res.json(populatedCart);
+    res.json({items:populatedCart.items});
   } catch (err) {
     res.status(500).json({ message: "Error adding to cart" });
   }
@@ -83,7 +83,7 @@ router.put("/update", async (req, res) => {
         "name price image isOffer discountPercentage expiryDate"
       );
 
-    res.json(populatedCart);
+    res.json({items:populatedCart.items});
   } catch (err) {
     res.status(500).json({ message: "Error updating quantity" });
   }
@@ -104,9 +104,9 @@ router.delete("/remove/:userId/:productId", async (req, res) => {
     await cart.save();
     // ✅ repopulate here too
     const populatedCart = await Cart.findOne({ userId })
-      .populate("items.productId", "name price image");
+      .populate("items.productId", "name price image isOffer discountPercentage expiryDate");
 
-    res.json(populatedCart);
+    res.json({items:populatedCart.items});
   }
   catch (err) {
     res.status(500).json({ message: "Error removing item" });
