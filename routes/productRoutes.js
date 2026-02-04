@@ -38,7 +38,11 @@ const storage=new CloudinaryStorage({
   },
 })
 
-const upload=multer({storage});
+const upload=multer({storage,
+  limits: {
+    fileSize: 15 * 1024 * 1024, // 15 MB
+  },
+});
 
 // ✅ Fetch all products
 router.get("/", async (req, res) => {
@@ -83,7 +87,7 @@ router.post("/",authMiddleware, (req, res,next) => {
     }
 
 
-const imagePath = req.file ? req.file.secure_url: "";
+const imagePath = req.file ? req.file.path: "";
       const newProduct = new productSchema({
       name,
       category,
@@ -156,6 +160,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
 // GET /api/products/offers
 router.get("/offers", async (req, res) => {
   try {
+    await markExpiringProducts();
     const today = new Date();
     today.setHours(0, 0, 0, 0); // start of today
 
