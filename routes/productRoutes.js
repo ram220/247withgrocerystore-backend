@@ -83,8 +83,7 @@ router.post("/",authMiddleware, (req, res,next) => {
     }
 
 
-const imagePath = req.file
-  ? req.file.path: "";
+const imagePath = req.file ? req.file.secure_url: "";
       const newProduct = new productSchema({
       name,
       category,
