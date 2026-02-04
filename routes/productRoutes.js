@@ -88,17 +88,41 @@ router.post("/",authMiddleware, (req, res,next) => {
 
 
 const imagePath = req.file ? req.file.path: "";
+
+      const expiry = expiryDate ? new Date(expiryDate) : null;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const tenDaysLater = new Date();
+      tenDaysLater.setDate(today.getDate() + 10);
+      tenDaysLater.setHours(23, 59, 59, 999);
+
+      // OFFER LOGIC AT ADD TIME
+      let isOffer = false;
+      let discountPercentage = 0;
+      let offerType = null;
+
+      if (expiry && expiry <= tenDaysLater) {
+        isOffer = true;
+        discountPercentage = 20;
+        offerType = "DISCOUNT";
+      }
+      
       const newProduct = new productSchema({
       name,
       category,
       price,
       image: imagePath,
-      expiryDate : expiryDate ? new Date(expiryDate) : null,
+      expiryDate : expiry,
       description:description || "NO description yet",
       inStock: req.body.inStock !== undefined ? req.body.inStock : true,
       keywords: keywords
         ? keywords.split(",").map((k) => k.trim().toLowerCase())
         : [],
+      isOffer,
+      offerType,
+      discountPercentage
     });
 
     await newProduct.save()
@@ -155,27 +179,16 @@ router.put("/:id", authMiddleware, async (req, res) => {
 });
 
 
-// ✅ OFFERS — MUST BE BEFORE :id
+// OFFERS — MUST BE BEFORE :id
 // OFFERS: products expiring in next 7 days
 // GET /api/products/offers
 router.get("/offers", async (req, res) => {
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // start of today
-
-    const tenDaysLater = new Date();
-    tenDaysLater.setDate(today.getDate() + 10);
-    tenDaysLater.setHours(23, 59, 59, 999); // end of 10th day
-
     const offers = await productSchema.find({
-      expiryDate: { $exists: true, $gte: today, $lte: tenDaysLater },
+      isOffer: true,
       inStock: true
     }).sort({ expiryDate: 1 });
 
     res.json(offers);
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
-  }
 });
 
 // 3️⃣ Recommended products (MUST BE BEFORE :id)
