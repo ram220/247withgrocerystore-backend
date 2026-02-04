@@ -70,6 +70,8 @@ app.post("/api/chatbot", async (req, res) => {
 
 */
 
+markExpiringProducts();
+
 
 // Optional: run every 24 hours
 const cron = require("node-cron");

@@ -160,7 +160,6 @@ router.put("/:id", authMiddleware, async (req, res) => {
 // GET /api/products/offers
 router.get("/offers", async (req, res) => {
   try {
-    await markExpiringProducts();
     const today = new Date();
     today.setHours(0, 0, 0, 0); // start of today
 
