@@ -81,6 +81,7 @@ router.post("/verify", async (req, res) => {
         userId: tempPayment.userId,
         items: formattedItems,
         totalAmount: tempPayment.totalAmount,
+        paymentMethod:"UPI",
         status: "Confirmed",
       });
       await newOrder.save();

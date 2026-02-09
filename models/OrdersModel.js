@@ -18,6 +18,12 @@ const ordersSchema = new mongoose.Schema({
         }
     ],
     totalAmount: { type: Number, required: true },
+        paymentMethod: {
+        type: String,
+        enum: ["COD", "UPI"],
+        default: "COD"
+    },
+
     status: { type: String, enum: ["Pending", "Confirmed", "Delivered", "Cancelled"], default: "Pending" },
     orderDate: { type: Date, default: Date.now }
 },{ timestamps: true });

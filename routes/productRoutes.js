@@ -7,6 +7,7 @@ const path = require("path");
 const {CloudinaryStorage}=require("multer-storage-cloudinary")
 const cloudinary=require("../config/cloudinary");
 
+
 /* configure multer storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -225,7 +226,6 @@ router.get("/:id", async (req, res) => {
     res.status(400).json({ message: "Invalid product ID" });
   }
 });
-
 
 
 

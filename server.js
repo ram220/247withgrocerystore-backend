@@ -12,7 +12,7 @@ const adminRoutes = require("./routes/adminRoutes");
 
 const markExpiringProducts = require("./utils/checkOffers");
 
-
+const chatbotRoutes=require('./routes/chatbotRoutes');
 
 
 const cors = require("cors");
@@ -41,34 +41,8 @@ app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/chatbot",chatbotRoutes);
 
-
-// chat bot
-/*
-const OpenAI = require("openai");
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-app.post("/api/chatbot", async (req, res) => {
-  try {
-    const { message } = req.body;
-    if (!message) return res.status(400).json({ error: "Message is required" });
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: message }],
-    });
-
-    res.json({ reply: response.choices[0].message.content });
-  } catch (err) {
-    console.error("Chatbot error:", err);
-    res.status(500).json({ error: "Something went wrong" });
-  }
-});
-
-*/
 
 markExpiringProducts();
 
