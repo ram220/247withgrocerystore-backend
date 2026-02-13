@@ -10,6 +10,9 @@ const suggestProducts = require("../chatbot/productSuggester");
 
 const matchProductInCart = require("../chatbot/cartProductMatcher");
 
+const extractCategory = require("../chatbot/categoryExtractor");
+
+
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -20,6 +23,17 @@ function cleanProductPhrase(text) {
     .replace(/\b(add|buy|put|remove|increase|decrease)\b/g, "")
     .replace(/\b(by|of|the|quantity|one|two)\b/g, "")
     .trim();
+}
+
+
+//to calculate final price on offer
+function getFinalPrice(product) {
+  if (product.isOffer && product.discountPercentage > 0) {
+    return Math.round(
+      product.price * (1 - product.discountPercentage / 100)
+    );
+  }
+  return product.price;
 }
 
 
@@ -50,6 +64,7 @@ router.post("/", async (req, res) => {
     const normalized = message.toLowerCase();
 
     const intent = detectIntent(normalized);
+   
 
     switch (intent) {
 
@@ -228,6 +243,46 @@ const product = await matchProduct(productPhrase);
         });
       }
 
+      // ================= CHEAPEST BY CATEGORY =================
+      case "CHEAPEST_BY_CATEGORY": {
+        const category = extractCategory(normalized);
+
+        if (!category) {
+          return res.json({
+            reply: "Please tell which category you want (rice, oil, milk, etc.)"
+          });
+        }
+
+        const products = await Product.find({
+          keywords: { $in: [category] },   // 🔥 KEY CHANGE
+          inStock: true
+        })
+
+        if (!products.length) {
+          return res.json({
+            reply: `No products found for ${category}`
+          });
+        }
+          
+        // 🔥 SORT BY FINAL PRICE (OFFER AWARE)
+        const sorted = products
+          .map(p => ({
+            ...p.toObject(),
+            finalPrice: getFinalPrice(p)
+          }))
+          .sort((a, b) => a.finalPrice - b.finalPrice)
+          .slice(0, 3);
+
+        return res.json({
+          reply:
+            `Cheapest ${category}:\n` +
+            sorted.map(p => `${p.name} – ₹${p.finalPrice}`).join("\n"),
+          products:sorted
+        });
+      }
+
+
+
       // ================= CLEAR CART =================
       case "CLEAR_CART": {
         if (!userId) {
@@ -290,6 +345,8 @@ const product = await matchProduct(productPhrase);
             : "No products found"
         });
       }
+
+      
 
       // ================= DEFAULT =================
       default:
