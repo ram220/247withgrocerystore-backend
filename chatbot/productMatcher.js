@@ -1,45 +1,37 @@
 const Product = require("../models/ProductsModel");
 
-module.exports = async function matchProduct(productPhrase) {
-  if (!productPhrase) return null;
+module.exports = async function matchProduct(input) {
+  if (!input) return null;
 
-  const phrase = productPhrase.toLowerCase().trim();
-  const words = phrase.split(" ").filter(Boolean);
+  const phrase = input.toLowerCase().trim();
 
-  const products = await Product.find({
-    inStock: true,
-    $or: [
-      { name: { $regex: phrase, $options: "i" } },
-      { keywords: { $regex: phrase, $options: "i" } }
-    ]
+  // 1️⃣ EXACT NAME MATCH (case-insensitive)
+  let product = await Product.findOne({
+    name: { $regex: new RegExp(`^${phrase}$`, "i") }
   });
 
-  if (!products.length) return null;
+  if (product) return product;
 
-  let bestProduct = null;
-  let bestScore = 0;
+  // 2️⃣ PARTIAL NAME MATCH (MOST IMPORTANT)
+  product = await Product.findOne({
+    name: { $regex: phrase, $options: "i" }
+  });
 
-  for (const product of products) {
-    let score = 0;
+  if (product) return product;
 
-    const name = product.name.toLowerCase();
-    const keywords = product.keywords.map(k => k.toLowerCase());
+  // 3️⃣ KEYWORD MATCH
+  product = await Product.findOne({
+    keywords: { $in: phrase.split(" ") }
+  });
 
-    // full phrase match (highest priority)
-    if (name.includes(phrase)) score += 10;
-    if (keywords.some(k => k.includes(phrase))) score += 10;
+  if (product) return product;
 
-    // word-level match
-    words.forEach(word => {
-      if (name.includes(word)) score += 3;
-      if (keywords.some(k => k.includes(word))) score += 5;
-    });
-
-    if (score > bestScore) {
-      bestScore = score;
-      bestProduct = product;
-    }
-  }
-
-  return bestProduct;
+  // 4️⃣ FALLBACK: ANY WORD MATCH
+  const words = phrase.split(" ");
+  return await Product.findOne({
+    $or: [
+      { name: { $regex: words.join("|"), $options: "i" } },
+      { keywords: { $in: words } }
+    ]
+  });
 };

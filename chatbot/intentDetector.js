@@ -1,49 +1,29 @@
 module.exports = function detectIntent(text) {
   text = text.toLowerCase();
 
-  // ADD TO CART
-  if (
-    text.includes("add") ||
-    text.includes("put") ||
-    text.includes("buy")
-  ) {
-    return "ADD_TO_CART";
-  }
-
-  // REMOVE FROM CART
-  if (
-    text.includes("remove") ||
-    text.includes("delete")
-  ) {
-    return "REMOVE_FROM_CART";
-  }
-
-  // CLEAR CART (🔥 THIS IS YOUR ISSUE)
-  if (
-    text.includes("clear cart") ||
-    text.includes("clear my cart") ||
-    text.includes("empty cart") ||
-    text.includes("empty my cart")
-  ) {
+  if (/clear|empty/.test(text) && text.includes("cart"))
     return "CLEAR_CART";
-  }
 
-  // OFFERS
-  if (
-    text.includes("offer") ||
-    text.includes("discount")
-  ) {
+  if (/show|view/.test(text) && text.includes("cart"))
+    return "SHOW_CART";
+
+  if (/remove|delete/.test(text))
+    return "REMOVE_FROM_CART";
+
+  if (/decrease|reduce|less/.test(text))
+    return "DECREASE_QUANTITY";
+
+  if (/increase|add more|more|another|extra/.test(text))
+    return "INCREASE_QUANTITY";
+
+  if (/add|buy|put/.test(text))
+    return "ADD_TO_CART";
+
+  if (/offer|discount/.test(text))
     return "SHOW_OFFERS";
-  }
 
-  // CHEAP PRODUCTS
-  if (
-    text.includes("cheap") ||
-    text.includes("lowest price") ||
-    text.includes("low price")
-  ) {
+  if (/cheap|lowest|low price/.test(text))
     return "CHEAP_PRODUCTS";
-  }
 
   return "UNKNOWN";
 };
