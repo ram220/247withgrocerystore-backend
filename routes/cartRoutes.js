@@ -9,7 +9,8 @@ router.get("/:userId", async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId: req.params.userId })
       .populate("items.productId", "name price image unit isOffer discountPercentage expiryDate"); // ✅ populate product
-    if (!cart) return res.json({ items: populatedCart.items });
+    if (!cart) return res.json({ items: [] });
+
     res.json(cart);
   } catch (err) {
     res.status(500).json({ message: "Error fetching cart" });
