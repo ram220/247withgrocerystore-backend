@@ -181,7 +181,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
 
 
 // OFFERS — MUST BE BEFORE :id
-// OFFERS: products expiring in next 7 days
+// OFFERS: products expiring in next 3 days
 // GET /api/products/offers
 router.get("/offers", async (req, res) => {
     const offers = await productSchema.find({

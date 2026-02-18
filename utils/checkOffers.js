@@ -6,7 +6,7 @@ const markExpiringProducts = async () => {
   today.setHours(0, 0, 0, 0);
 
   const tenDaysLater = new Date();
-  tenDaysLater.setDate(today.getDate() + 10);
+  tenDaysLater.setDate(today.getDate() + 3);
   tenDaysLater.setHours(23, 59, 59, 999);
 
   // REMOVE OFFERS FOR EXPIRED PRODUCTS
