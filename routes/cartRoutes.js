@@ -8,7 +8,7 @@ const router = express.Router();
 router.get("/:userId", async (req, res) => {
   try {
     const cart = await Cart.findOne({ userId: req.params.userId })
-      .populate("items.productId", "name price image isOffer discountPercentage expiryDate"); // ✅ populate product
+      .populate("items.productId", "name price image unit isOffer discountPercentage expiryDate"); // ✅ populate product
     if (!cart) return res.json({ items: populatedCart.items });
     res.json(cart);
   } catch (err) {
@@ -20,7 +20,7 @@ router.get("/:userId", async (req, res) => {
 
 // Add to cart
 router.post("/add", async (req, res) => {
-  const { userId, productId, quantity } = req.body;
+  const { userId, productId, quantity,weight } = req.body;
 
   try {
       const product = await Product.findById(productId);
@@ -40,18 +40,30 @@ router.post("/add", async (req, res) => {
       (item) => item.productId.toString() === productId
     );
 
-    if (itemIndex > -1) {
-      // if exists, increase quantity
-      cart.items[itemIndex].quantity += quantity || 1;
+    if (product.unit === "KG") {
+      // 🔥 KG PRODUCT → USE WEIGHT
+      if (itemIndex > -1) {
+        cart.items[itemIndex].weight += weight;
+      } else {
+        cart.items.push({
+          productId,
+          quantity: 1,
+          weight
+        });
+      }
     } else {
-      // if not, push new item
-      cart.items.push({ productId, quantity: quantity || 1 });
+      // NORMAL PRODUCT
+      if (itemIndex > -1) {
+        cart.items[itemIndex].quantity += quantity;
+      } else {
+        cart.items.push({ productId, quantity });
+      }
     }
 
     await cart.save();
      // ✅ repopulate before sending response
     const populatedCart = await Cart.findOne({ userId })
-      .populate("items.productId", "name price image isOffer discountPercentage expiryDate");
+      .populate("items.productId", "name price image unit isOffer discountPercentage expiryDate");
 
     res.json({items:populatedCart.items});
   } catch (err) {
@@ -62,7 +74,7 @@ router.post("/add", async (req, res) => {
 // Update cart item quantity
 router.put("/update", async (req, res) => {
   try {
-    const { userId, productId, quantity } = req.body;
+    const { userId, productId, quantity, weight } = req.body;
 
     const cart = await Cart.findOne({ userId });
     if (!cart) return res.status(404).json({ message: "Cart not found" });
@@ -73,14 +85,21 @@ router.put("/update", async (req, res) => {
 
     if (!item) return res.status(404).json({ message: "Item not found" });
 
-    item.quantity = quantity;
+    if (item.weight !== null) {
+      item.weight = weight; // quantity = weight here
+      item.quantity = 1;      // always keep quantity = 1 for KG
+    } else {
+      item.quantity = quantity;
+    }
+
+
 
     await cart.save();
 
     const populatedCart = await Cart.findOne({ userId })
       .populate(
         "items.productId",
-        "name price image isOffer discountPercentage expiryDate"
+        "name price image unit isOffer discountPercentage expiryDate"
       );
 
     res.json({items:populatedCart.items});
@@ -104,7 +123,7 @@ router.delete("/remove/:userId/:productId", async (req, res) => {
     await cart.save();
     // ✅ repopulate here too
     const populatedCart = await Cart.findOne({ userId })
-      .populate("items.productId", "name price image isOffer discountPercentage expiryDate");
+      .populate("items.productId", "name price image unit isOffer discountPercentage expiryDate");
 
     res.json({items:populatedCart.items});
   }

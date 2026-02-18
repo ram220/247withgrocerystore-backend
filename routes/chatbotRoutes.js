@@ -60,7 +60,7 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    // ✅ NORMALIZE TELUGU + SLANG
+    // NORMALIZE TELUGU + SLANG
     const normalized = message.toLowerCase();
 
     const intent = detectIntent(normalized);
@@ -70,55 +70,67 @@ router.post("/", async (req, res) => {
 
       // ================= ADD TO CART =================
       case "ADD_TO_CART": {
-  if (!userId) {
-    return res.json({ reply: "Please login to add items to your cart" });
-  }
+        if (!userId) {
+          return res.json({ reply: "Please login to add items to your cart" });
+        }
 
-  // 🔥 STEP 1: MATCH PRODUCT USING FULL TEXT
-  const productPhrase = cleanProductPhrase(normalized);
-const product = await matchProduct(productPhrase);
+        //  STEP 1: MATCH PRODUCT USING FULL TEXT
+        const productPhrase = cleanProductPhrase(normalized);
+      const product = await matchProduct(productPhrase);
 
 
-  if (!product) {
-    const suggestions = await suggestProducts(normalized);
-    return res.json({
-      reply: suggestions.length
-        ? "I couldn't find that product. Did you mean:\n" +
-          suggestions.map(p => `• ${p.name}`).join("\n")
-        : "Sorry, I couldn't find that product"
-    });
-  }
+        if (!product) {
+          const suggestions = await suggestProducts(normalized);
+          return res.json({
+            reply: suggestions.length
+              ? "I couldn't find that product. Did you mean:\n" +
+                suggestions.map(p => `• ${p.name}`).join("\n")
+              : "Sorry, I couldn't find that product"
+          });
+        }
 
-  // 🔥 STEP 2: NOW EXTRACT ENTITIES (PRODUCT AWARE)
-  const entities = extractEntities(normalized, product);
+        //  STEP 2: NOW EXTRACT ENTITIES (PRODUCT AWARE)
+        const entities = extractEntities(normalized, product);
 
-  let cart = await Cart.findOne({ userId });
-  if (!cart) cart = new Cart({ userId, items: [] });
+        let cart = await Cart.findOne({ userId });
+        if (!cart) cart = new Cart({ userId, items: [] });
 
-  const item = cart.items.find(
-    i => i.productId.toString() === product._id.toString()
-  );
+        const item = cart.items.find(
+          i => i.productId.toString() === product._id.toString()
+        );
+        if (product.unit === "KG") {
+          if (item) {
+            item.weight += entities.weight;
+          } else {
+            cart.items.push({
+              productId: product._id,
+              quantity: 1,
+              weight: entities.weight
+            });
+          }
+        } else {
+          if (item) {
+            item.quantity += entities.quantity;
+          } else {
+            cart.items.push({
+              productId: product._id,
+              quantity: entities.quantity
+            });
+          }
+        }
 
-  if (item) {
-    item.quantity += entities.quantity;
-  } else {
-    cart.items.push({
-      productId: product._id,
-      quantity: entities.quantity
-    });
-  }
 
-  await cart.save();
+        await cart.save();
 
-  // 🔥 POPULATE PRODUCT DETAILS
-    const populatedCart = await Cart.findOne({ userId })
-    .populate("items.productId", CART_POPULATE_FIELDS);
+        // 🔥 POPULATE PRODUCT DETAILS
+          const populatedCart = await Cart.findOne({ userId })
+          .populate("items.productId", CART_POPULATE_FIELDS);
 
-  return res.json({
-    reply: `Added ${product.name} to your cart`,
-    cart: populatedCart.items
-  });
-}
+        return res.json({
+          reply: `Added ${product.name} to your cart`,
+          cart: populatedCart.items
+        });
+      }
 
 
       // ================= INCREASE QUANTITY =================

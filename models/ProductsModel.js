@@ -5,10 +5,12 @@ const productSchema=new mongoose.Schema({
     category:{type:String,required:true},
     price:{type:Number,required:true},
     image:{type:String,default:null},
+    unit: { type: String, enum: ["UNIT", "KG"], default: "UNIT" },
+    baseWeight: { type: Number, default: 1 },
     description:{type:String,default:"No description yet"},
     inStock: { type: Boolean, default: true },
     keywords: [{ type: String,required:true }],
-
+    
 
     // for offers section 
     expiryDate: {
