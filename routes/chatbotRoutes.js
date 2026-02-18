@@ -229,7 +229,9 @@ router.post("/", async (req, res) => {
           return res.json({ reply: "Please login to manage your cart" });
         }
 
-        const cart = await Cart.findOne({ userId });
+        const cart = await Cart.findOne({ userId })
+          .populate("items.productId", CART_POPULATE_FIELDS);
+          
         if (!cart || cart.items.length === 0) {
           return res.json({ reply: "Your cart is empty" });
         }
