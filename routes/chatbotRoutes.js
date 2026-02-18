@@ -241,12 +241,12 @@ router.post("/", async (req, res) => {
           return res.json({ reply: "I couldn't find that product in your cart" });
         }
 
-        cart.items = cart.items.filter(
+        cart.items.pull(item._id);
+        /*cart.items = cart.items.filter(
           i => i.productId.toString() !== item.productId._id.toString()
-        );
+        );*/
 
         await cart.save();
-
         
         const populatedCart = await Cart.findOne({ userId })
           .populate("items.productId", CART_POPULATE_FIELDS);
